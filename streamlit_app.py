@@ -72,3 +72,52 @@ if go:
         })
         st.markdown("### 📈 株価チャート（実績＋予測）")
         st.line_chart(df_chart.set_index("Day"))
+
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+st.title("📈 株価AI予測アプリ")
+
+ticker = st.text_input("銘柄コードを入力してください（例: 7203.T）", value="7203.T")
+
+if ticker:
+    data = yf.download(ticker, period="6mo", interval="1d")
+    if data.empty:
+        st.warning("株価データが取得できませんでした。")
+    else:
+        # 特徴量の作成（移動平均など）
+        data["Close_shift"] = data["Close"].shift(1)
+        data["MA_5"] = data["Close"].rolling(window=5).mean().shift(1)
+        data = data.dropna()
+
+        # 入力と出力
+        X = data[["Close_shift", "MA_5"]]
+        y = data["Close"]
+
+        # モデル訓練
+        model = LinearRegression()
+        model.fit(X, y)
+
+        # 直近のデータで予測
+        latest_X = X.iloc[-1].values.reshape(1, -1)
+        predicted_price = model.predict(latest_X)[0]
+
+        current_price = data["Close"].iloc[-1]
+        st.metric(label="現在の株価", value=f"{current_price:.2f} 円")
+        st.metric(label="予測される翌営業日の株価", value=f"{predicted_price:.2f} 円")
+
+        # 判断ルール（±1.5%以上変動予測で判断）
+        threshold = 0.015
+        change_rate = (predicted_price - current_price) / current_price
+
+        if change_rate > threshold:
+            st.success("✅ 買いのチャンスです！")
+        elif change_rate < -threshold:
+            st.error("⚠️ 売却を検討しましょう。")
+        else:
+            st.info("👀 様子を見ましょう。")
+
+        
