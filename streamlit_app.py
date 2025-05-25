@@ -59,8 +59,16 @@ if go:
         col2.metric("予測終値（翌営業日）", f"{predicted_price:.2f} 円", f"{diff:+.2f} 円")
         col3.metric("AI判断", comment)
 
-        # チャート表示
-        st.markdown("### 📉 株価チャート（過去＋予測）")
-        chart_df = data[["Close"]].copy()
-        chart_df.loc[chart_df.index[-1] + pd.Timedelta(days=1)] = predicted_price
-        st.line_chart(chart_df)
+        # グラフ用データ
+all_days = np.concatenate([X, future_X]).flatten()
+all_prices = np.concatenate([y, predictions]).flatten()
+df_chart = pd.DataFrame({
+    "Day": all_days,
+    "Price": all_prices
+})
+
+st.markdown("### 📈 株価チャート（実績＋予測）")
+st.line_chart(df_chart.set_index("Day"))
+
+
+       
