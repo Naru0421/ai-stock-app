@@ -66,6 +66,7 @@ if go:
         past_dates = data.index.tolist()
         past_prices = data["Close"].tolist()
 
+
         # 予測データ（1営業日後）
         next_date = past_dates[-1] + pd.Timedelta(days=1)
 
