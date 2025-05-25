@@ -59,21 +59,26 @@ if go:
         col2.metric("予測終値（翌営業日）", f"{predicted_price:.2f} 円", f"{diff:+.2f} 円")
         col3.metric("AI判断", comment)
 
-        # チャート表示（過去の株価 + 予測のみ1点）
+        # チャート表示（過去の株価 + 予測）
         st.markdown("### 📈 株価チャート（過去＋予測）")
 
-        # データのコピーと1日後の予測追加
-        past_dates = list(data.index)
-        past_prices = list(data["Close"])
-        next_date = data.index[-1] + pd.Timedelta(days=1)
+        # 過去のデータ
+        past_dates = data.index.tolist()
+        past_prices = data["Close"].tolist()
 
+        # 予測データ（1営業日後）
+        next_date = past_dates[-1] + pd.Timedelta(days=1)
+
+        all_dates = past_dates + [next_date]
+        all_prices = past_prices + [predicted_price]
+
+        # DataFrameに変換（長さが一致）
         chart_df = pd.DataFrame({
-            "日付": past_dates + [next_date],
-            "終値": past_prices + [predicted_price]
-        })
-        chart_df = chart_df.set_index("日付")
+            "終値": all_prices
+        }, index=all_dates)
 
         st.line_chart(chart_df)
+
 
 
 
