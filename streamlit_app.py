@@ -60,15 +60,11 @@ if go:
         col3.metric("AI判断", comment)
 
         # チャート表示（過去の株価 + 予測のみ1点）
-st.markdown("### 📈 株価チャート（過去＋予測）")
-
-# データコピーと1日先の予測追加
-chart_df = data[["Close"]].copy()
-next_day = chart_df.index[-1] + pd.Timedelta(days=1)
-chart_df.loc[next_day] = predicted_price
-
-# チャート描画
-st.line_chart(chart_df)
+        st.markdown("### 📈 株価チャート（過去＋予測）")
+        chart_df = data[["Close"]].copy()
+        next_day = chart_df.index[-1] + pd.Timedelta(days=1)
+        chart_df.loc[next_day] = predicted_price
+        st.line_chart(chart_df)
 
 
         
