@@ -59,19 +59,15 @@ if go:
         col2.metric("予測終値（翌営業日）", f"{predicted_price:.2f} 円", f"{diff:+.2f} 円")
         col3.metric("AI判断", comment)
 
-        # チャート表示（過去の株価 + 予測1日分）
-st.markdown("### 📉 株価チャート（過去＋予測）")
-
-# Series を使って処理（長さ不一致を防ぐ）
-chart_series = data["Close"].copy()
-chart_series.loc[next_date] = predicted_price  # 予測日を追加
-
-# DataFrame に変換して描画
-chart_df = chart_series.reset_index()
-chart_df.columns = ["日付", "終値"]
-chart_df = chart_df.set_index("日付")
-
-st.line_chart(chart_df)
+        # 📈 チャート表示（ここも if go の中に入れる！）
+        st.markdown("### 📉 株価チャート（過去＋予測）")
+        next_date = data.index[-1] + pd.Timedelta(days=1)
+        chart_series = data["Close"].copy()
+        chart_series.loc[next_date] = predicted_price
+        chart_df = chart_series.reset_index()
+        chart_df.columns = ["日付", "終値"]
+        chart_df = chart_df.set_index("日付")
+        st.line_chart(chart_df)
 
 
 
