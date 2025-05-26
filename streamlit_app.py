@@ -115,7 +115,7 @@ if st.button("📉 テクニカル分析を表示"):
         # グラフ表示（NaNを含む行は削除
     # 🔽 すでにあるコード（位置を基準に）
 
-if st.button("📉 テクニカル分析を表示"):
+if st.button("📉 テクニカル分析を表示", key="tech_button"):
     tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
 
     if tech_data.empty:
