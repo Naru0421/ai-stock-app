@@ -92,12 +92,13 @@ if st.button("📉 テクニカル分析を表示"):
         rs = avg_gain / avg_loss
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
-        # グラフ表示
-        st.markdown("### 📉 株価と移動平均線")
-        st.line_chart(tech_data[["Close", "MA5", "MA25"]])
+        # グラフ表示（NaNを含む行は削除）
+st.markdown("### 📉 株価と移動平均線")
 
-        st.markdown("### 📊 RSI（相対力指数）")
-        st.line_chart(tech_data["RSI"])
+# 必要な列が揃っている行だけ使う
+plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
+st.line_chart(plot_data)
+
 
 
 
