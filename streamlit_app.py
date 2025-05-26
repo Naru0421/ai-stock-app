@@ -113,17 +113,19 @@ if st.button("📉 テクニカル分析を表示"):
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
         # グラフ表示（NaNを含む行は削除
-       if st.button("📉 テクニカル分析を表示"):
-            tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
+    # 🔽 すでにあるコード（位置を基準に）
 
-        if tech_data.empty:
+if st.button("📉 テクニカル分析を表示"):
+    tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
+
+    if tech_data.empty:
         st.warning("データ取得に失敗しました。")
-        else:
+    else:
         # 移動平均線（MA5, MA25）
         tech_data["MA5"] = tech_data["Close"].rolling(window=5).mean()
         tech_data["MA25"] = tech_data["Close"].rolling(window=25).mean()
 
-        # RSI（相対力指数）の計算
+        # RSIの計算
         delta = tech_data["Close"].diff()
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
@@ -132,10 +134,11 @@ if st.button("📉 テクニカル分析を表示"):
         rs = avg_gain / avg_loss
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
-        # グラフ表示
+        # チャート表示
         st.markdown("### 📉 株価と移動平均線")
         plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
         st.line_chart(plot_data)
+
 
 
 
