@@ -114,7 +114,6 @@ if st.button("📉 テクニカル分析を表示"):
 
         # グラフ表示（NaNを含む行は削除
         if st.button("📉 テクニカル分析を表示"):
-
     tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
 
     if tech_data.empty:
@@ -133,10 +132,11 @@ if st.button("📉 テクニカル分析を表示"):
         rs = avg_gain / avg_loss
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
-        # チャート表示（ここで定義してOK）
+        # チャート表示
         st.markdown("### 📉 株価と移動平均線")
         plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
         st.line_chart(plot_data)
+
 
 
 
