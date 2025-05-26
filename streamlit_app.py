@@ -92,21 +92,23 @@ if st.button("📈 チャートを表示"):
 # -----------------------
 # 📊 3. テクニカル分析（RSI & 移動平均線）
 # -----------------------
-# テクニカル分析セクション（重複ボタン削除＆構造修正）
 st.markdown("## 📊 テクニカル分析：RSI & 移動平均線")
+
+# 入力欄
 selected_ticker = st.text_input("銘柄コード（RSIと移動平均線を表示）", "7203.T")
 
-if st.button("📉 テクニカル分析を表示"):
+# テクニカル分析ボタン
+if st.button("📉 テクニカル分析を表示", key="tech_button"):
     tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
 
     if tech_data.empty:
         st.warning("データ取得に失敗しました。")
     else:
-        # 👇 ここで移動平均を生成！
+        # 🔁 移動平均線の計算
         tech_data["MA5"] = tech_data["Close"].rolling(window=5).mean()
         tech_data["MA25"] = tech_data["Close"].rolling(window=25).mean()
 
-        # RSIの計算
+        # 🔁 RSI の計算
         delta = tech_data["Close"].diff()
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
@@ -115,10 +117,21 @@ if st.button("📉 テクニカル分析を表示"):
         rs = avg_gain / avg_loss
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
-        # 📈 チャート表示（NaNを除いた後）
+        # 📈 グラフ表示
         st.markdown("### 📉 株価と移動平均線")
-        plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
-        st.line_chart(plot_data)
+        try:
+            plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
+            st.line_chart(plot_data)
+        except KeyError:
+            st.error("移動平均線が正しく計算できていません。データの欠損が多い可能性があります。")
+
+        st.markdown("### 💡 RSI（相対力指数）")
+        try:
+            st.line_chart(tech_data[["RSI"]].dropna())
+        except KeyError:
+            st.error("RSIの計算に失敗しました。")
+
+
 
 
 
