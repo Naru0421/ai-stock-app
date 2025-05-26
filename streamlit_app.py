@@ -66,6 +66,41 @@ if st.button("📊 チャートを表示"):
         st.error("📉 有効な株価データが取得できませんでした。")
 
 
+        # -----------------------------------------
+# 📈 テクニカル指標（RSI & 移動平均線）表示機能
+# -----------------------------------------
+st.markdown("## 📊 テクニカル分析：RSI & 移動平均線")
+
+selected_ticker = st.text_input("銘柄コード（RSIと移動平均線を表示）", "7203.T")
+if st.button("📉 テクニカル分析を表示"):
+
+    tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
+
+    if tech_data.empty:
+        st.warning("データ取得に失敗しました。")
+    else:
+        # 移動平均線（MA5, MA25）
+        tech_data["MA5"] = tech_data["Close"].rolling(window=5).mean()
+        tech_data["MA25"] = tech_data["Close"].rolling(window=25).mean()
+
+        # RSI（相対力指数）の計算
+        delta = tech_data["Close"].diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
+        rs = avg_gain / avg_loss
+        tech_data["RSI"] = 100 - (100 / (1 + rs))
+
+        # グラフ表示
+        st.markdown("### 📉 株価と移動平均線")
+        st.line_chart(tech_data[["Close", "MA5", "MA25"]])
+
+        st.markdown("### 📊 RSI（相対力指数）")
+        st.line_chart(tech_data["RSI"])
+
+
+
         # 判断
         if rate > 1.5:
             comment = "📈 買いのチャンスです！"
