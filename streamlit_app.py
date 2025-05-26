@@ -112,9 +112,18 @@ if st.button("📉 テクニカル分析を表示"):
         rs = avg_gain / avg_loss
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
-        st.markdown("### 📈 株価と移動平均線")
-        plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
+        # グラフ表示（NaNを含む行は削除）
+st.markdown("### 📉 株価と移動平均線")
+
+try:
+    plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
+    if not plot_data.empty:
         st.line_chart(plot_data)
+    else:
+        st.warning("📉 有効なデータがありません（MAやCloseに欠損がある可能性）")
+except KeyError as e:
+    st.error(f"⚠️ 必要な列が見つかりません: {e}")
+
 
 
 
