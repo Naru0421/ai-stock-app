@@ -112,17 +112,32 @@ if st.button("📉 テクニカル分析を表示"):
         rs = avg_gain / avg_loss
         tech_data["RSI"] = 100 - (100 / (1 + rs))
 
-        # グラフ表示（NaNを含む行は削除）
-st.markdown("### 📉 株価と移動平均線")
+        # グラフ表示（NaNを含む行は削除
+        if st.button("📉 テクニカル分析を表示"):
 
-try:
-    plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
-    if not plot_data.empty:
-        st.line_chart(plot_data)
+    tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
+
+    if tech_data.empty:
+        st.warning("データ取得に失敗しました。")
     else:
-        st.warning("📉 有効なデータがありません（MAやCloseに欠損がある可能性）")
-except KeyError as e:
-    st.error(f"⚠️ 必要な列が見つかりません: {e}")
+        # 移動平均線
+        tech_data["MA5"] = tech_data["Close"].rolling(window=5).mean()
+        tech_data["MA25"] = tech_data["Close"].rolling(window=25).mean()
+
+        # RSI
+        delta = tech_data["Close"].diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
+        rs = avg_gain / avg_loss
+        tech_data["RSI"] = 100 - (100 / (1 + rs))
+
+        # チャート表示（ここで定義してOK）
+        st.markdown("### 📉 株価と移動平均線")
+        plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
+        st.line_chart(plot_data)
+
 
 
 
