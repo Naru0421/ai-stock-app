@@ -3,3 +3,8 @@ yfinance
 scikit-learn
 pandas
 numpy
+scikit-learn
+pandas
+yfinance
+numpy
+streamlit

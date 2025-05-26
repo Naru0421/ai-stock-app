@@ -45,6 +45,27 @@ if go:
         diff = predicted_price - current_price
         rate = diff / current_price * 100
 
+        st.markdown("## 📊 複数銘柄チャート比較")
+
+ticker_input = st.text_input("複数銘柄コードをカンマ区切りで入力（例：7203.T,6758.T,9984.T）", "7203.T,6758.T")
+if st.button("📊 チャートを表示"):
+    tickers = [t.strip() for t in ticker_input.split(",")]
+    chart_data = pd.DataFrame()
+
+    for ticker in tickers:
+        try:
+            df = yf.download(ticker, period="3mo", interval="1d", progress=False)
+            if not df.empty:
+                chart_data[ticker] = df["Close"]
+        except:
+            st.warning(f"{ticker} のデータ取得に失敗しました。")
+
+    if not chart_data.empty:
+        st.line_chart(chart_data)
+    else:
+        st.error("📉 有効な株価データが取得できませんでした。")
+
+
         # 判断
         if rate > 1.5:
             comment = "📈 買いのチャンスです！"
