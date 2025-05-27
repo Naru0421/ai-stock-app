@@ -5,138 +5,99 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 st.set_page_config(page_title="AI株価予測", layout="wide")
+
+# タイトルと概要
 st.title("📈 AI株価予測アプリ")
 st.markdown("過去3〜6ヶ月の株価データをもとに、翌週の終値をAIが予測します。")
+st.markdown("- 複数銘柄チャートの比較\n- テクニカル分析（移動平均線・RSI）\n- AIによる翌営業日の価格予測と判断表示")
 
-# -----------------------
-# 🔍 1. 単独銘柄予測
-# -----------------------
-col1, col2 = st.columns([3, 1])
-with col1:
-    ticker = st.text_input("🔍 銘柄コード（例：7203.T）", "7203.T")
-with col2:
-    go = st.button("📊 予測する")
-
-if go:
+# 株価予測パート
+ticker = st.text_input("🔍 銘柄コードを入力\n例: 7203.T (トヨタ自動車)", "7203.T")
+if st.button("📊 AI予測する"):
     data = yf.download(ticker, period="6mo", interval="1d", progress=False)
-
     if data.empty:
-        st.error("⚠️ データ取得に失敗しました。銘柄コードを確認してください。")
+        st.error("データ取得に失敗しました。")
     else:
-        # 特徴量作成
         data["Close_shift"] = data["Close"].shift(1)
         data["MA_5"] = data["Close"].rolling(window=5).mean().shift(1)
         data = data.dropna()
-
         X = data[["Close_shift", "MA_5"]]
         y = data["Close"]
-
         model = LinearRegression()
         model.fit(X, y)
-
         latest_X = X.iloc[-1].values.reshape(1, -1)
-        predicted_price = model.predict(latest_X)[0]
-
+        predicted_price = float(model.predict(latest_X)[0])
         current_price = float(data["Close"].iloc[-1])
-        predicted_price = float(predicted_price)
         diff = predicted_price - current_price
         rate = diff / current_price * 100
 
-        # AI判断コメント
         if rate > 1.5:
             comment = "📈 買いのチャンスです！"
         elif rate < -1.5:
             comment = "📉 売却を検討しましょう。"
         else:
-            comment = "⏳ 様子を見ましょう。"
+            comment = "🟡 様子を見ましょう。"
 
-        # メトリック表示
+        st.markdown("## ✅ AIによる予測結果")
         col1, col2, col3 = st.columns(3)
         col1.metric("現在の株価", f"{current_price:.2f} 円")
         col2.metric("予測終値（翌営業日）", f"{predicted_price:.2f} 円", f"{diff:+.2f} 円")
         col3.metric("AI判断", comment)
 
-        # チャート表示（予測含む）
-        st.markdown("### 📉 株価チャート（過去＋予測）")
-        next_date = data.index[-1] + pd.Timedelta(days=1)
+        st.markdown("### 📈 株価チャート（過去＋予測）")
         chart_series = data["Close"].copy()
+        next_date = chart_series.index[-1] + pd.Timedelta(days=1)
         chart_series.loc[next_date] = predicted_price
         chart_df = chart_series.reset_index()
         chart_df.columns = ["日付", "終値"]
         chart_df = chart_df.set_index("日付")
         st.line_chart(chart_df)
 
-# -----------------------
-# 📊 2. 複数銘柄比較チャート
-# -----------------------
+# 複数銘柄チャート比較
 st.markdown("## 📊 複数銘柄チャート比較")
-
-ticker_input = st.text_input("複数銘柄コードをカンマ区切りで入力（例：7203.T,6758.T）", "7203.T,6758.T")
-if st.button("📈 チャートを表示"):
-    tickers = [t.strip() for t in ticker_input.split(",")]
-    chart_data = pd.DataFrame()
-
+multi_input = st.text_input("銘柄コードをカンマで区切って入力（例：7203.T,6758.T）", "7203.T,6758.T")
+if st.button("📉 チャートを表示"):
+    tickers = [x.strip() for x in multi_input.split(",")]
+    df_all = pd.DataFrame()
     for t in tickers:
-        try:
-            df = yf.download(t, period="3mo", interval="1d", progress=False)
-            if not df.empty:
-                chart_data[t] = df["Close"]
-        except:
-            st.warning(f"{t} のデータ取得に失敗しました。")
-
-    if not chart_data.empty:
-        st.line_chart(chart_data)
+        df = yf.download(t, period="3mo", interval="1d", progress=False)
+        if not df.empty:
+            df_all[t] = df["Close"]
+    if not df_all.empty:
+        st.line_chart(df_all)
     else:
-        st.error("📉 有効な株価データが取得できませんでした。")
+        st.warning("有効な株価データが取得できませんでした。")
 
-# -----------------------
-# 📊 3. テクニカル分析（RSI & 移動平均線）
-# -----------------------
+# テクニカル分析
 st.markdown("## 📊 テクニカル分析：RSI & 移動平均線")
-
-# 入力欄
-selected_ticker = st.text_input("銘柄コード（RSIと移動平均線を表示）", "7203.T")
-
-# テクニカル分析ボタン
-if st.button("📉 テクニカル分析を表示", key="tech_button"):
-    tech_data = yf.download(selected_ticker, period="3mo", interval="1d", progress=False)
-
-    if tech_data.empty:
-        st.warning("データ取得に失敗しました。")
+tech_ticker = st.text_input("銘柄コード（RSIと移動平均線を表示）", "7203.T")
+if st.button("📈 テクニカル分析を表示"):
+    df = yf.download(tech_ticker, period="3mo", interval="1d", progress=False)
+    if df.empty:
+        st.error("テクニカルデータ取得に失敗しました。")
     else:
-        # 🔁 移動平均線の計算
-        tech_data["MA5"] = tech_data["Close"].rolling(window=5).mean()
-        tech_data["MA25"] = tech_data["Close"].rolling(window=25).mean()
-
-        # 🔁 RSI の計算
-        delta = tech_data["Close"].diff()
+        df["MA5"] = df["Close"].rolling(window=5).mean()
+        df["MA25"] = df["Close"].rolling(window=25).mean()
+        delta = df["Close"].diff()
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
         avg_gain = gain.rolling(window=14).mean()
         avg_loss = loss.rolling(window=14).mean()
         rs = avg_gain / avg_loss
-        tech_data["RSI"] = 100 - (100 / (1 + rs))
+        df["RSI"] = 100 - (100 / (1 + rs))
 
-        # 📈 グラフ表示
         st.markdown("### 📉 株価と移動平均線")
-        try:
-            plot_data = tech_data[["Close", "MA5", "MA25"]].dropna()
+        plot_data = df[["Close", "MA5", "MA25"]].dropna()
+        if plot_data.empty:
+            st.warning("移動平均線が正しく計算できていません。")
+        else:
             st.line_chart(plot_data)
-        except KeyError:
-            st.error("移動平均線が正しく計算できていません。データの欠損が多い可能性があります。")
 
         st.markdown("### 💡 RSI（相対力指数）")
-        try:
-            st.line_chart(tech_data[["RSI"]].dropna())
-        except KeyError:
-            st.error("RSIの計算に失敗しました。")
-
-
-
-
-
-
-
+        if df["RSI"].dropna().empty:
+            st.warning("RSIの計算に失敗しました。")
+        else:
+            st.line_chart(df["RSI"])
 
 
 
